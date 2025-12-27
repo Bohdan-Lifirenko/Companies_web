@@ -3,6 +3,7 @@ import sqlite3
 from pathlib import Path
 import pandas as pd
 
+from src.domain.source.csv_financial_metric_source import CsvFinancialMetricSource
 from src.domain.storage import SqlCFinancialMetricStorage
 
 
@@ -121,4 +122,8 @@ if __name__ == '__main__':
     sql_db = SqlCFinancialMetricStorage(sqlite3.connect(db_file))
     revenue_list = sql_db.get_company_revenue_statistic('00236903')
     print(revenue_list)
+
+    csvmf = CsvFinancialMetricSource(data_dir / 'fin_values.csv')
+    metrics = csvmf.get_fin_metrics()
+    print(metrics)
 
