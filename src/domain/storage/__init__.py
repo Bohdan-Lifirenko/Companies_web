@@ -1,4 +1,4 @@
 from .financial_metric_storage import FinancialMetricStorage
-from .sql_cfinancial_metric_storage import SqlCFinancialMetricStorage
+from .sqllite_cfinancial_metric_storage import SqliteCFinancialMetricStorage
 
-__all__ = ['FinancialMetricStorage', 'SqlCFinancialMetricStorage']
+__all__ = ['FinancialMetricStorage', 'SqliteCFinancialMetricStorage']

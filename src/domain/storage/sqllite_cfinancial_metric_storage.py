@@ -5,7 +5,7 @@ from src.domain.models import FinancialMetric, Revenue
 from src.domain.storage.financial_metric_storage import FinancialMetricStorage
 
 
-class SqlCFinancialMetricStorage(FinancialMetricStorage):
+class SqliteCFinancialMetricStorage(FinancialMetricStorage):
 
     _instance = None  # Змінна для зберігання єдиного екземпляра
 

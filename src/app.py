@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.domain.source.csv_financial_metric_source import CsvFinancialMetricSource
-from src.domain.storage import SqlCFinancialMetricStorage
+from src.domain.storage import SqliteCFinancialMetricStorage
 
 
 def create_db():
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     revenue_df = get_company_revenue(db_file, '00236903', 2000)
     print(revenue_df)
 
-    sql_db = SqlCFinancialMetricStorage(sqlite3.connect(db_file))
+    sql_db = SqliteCFinancialMetricStorage(sqlite3.connect(db_file))
     revenue_list = sql_db.get_company_revenue_statistic('00236903')
     print(revenue_list)
 
