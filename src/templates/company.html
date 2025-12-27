@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Company Revenue Chart - {{ tax_id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow info-card mb-4">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Revenue History for Tax ID: {{ tax_id }}</h2>
+                <div id="revenueChart" style="width:100%; height:500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Plotly CDN -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<!-- Custom JS for fetching and plotting -->
+<script src="/static/js/company.js"></script>
+{% endblock %}

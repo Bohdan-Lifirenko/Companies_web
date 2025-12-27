@@ -1,5 +1,5 @@
 from .company import Company
-from .financial_metric import FinancialMetric
+from .company import FinancialMetric
 from .revenue import Revenue
 from .balance import Balance
 
