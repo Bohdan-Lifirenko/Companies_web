@@ -5,6 +5,10 @@ from typing import List
 from src.domain.models import Revenue, CompanyProfile, Balance
 from src.domain.storage import CompanyStorage
 
+class FinancialMetricCode:
+    REVENUE = 2000
+    ASSETS = 1300
+    EQUITY = 1495
 
 class CompanyService:
     def __init__(self, company_storage: CompanyStorage):
@@ -25,21 +29,9 @@ class CompanyService:
     def get_revenue_history(self, company_id: str) -> list[Revenue]:
         company = self.storage.get(company_id)
 
-        revenues: List[Revenue] = []
+        revenues = self._extract_revenues(company.financial_metrics)
 
-        for metric in company.financial_metrics:
-            if metric.code == 2000:
-                revenues.append(
-                    Revenue(
-                        date=metric.date,
-                        value=metric.value
-                    )
-                )
-
-        # Sort revenues by date in ascending order
-        revenues.sort(key=lambda r: r.date)
-
-        return revenues
+        return self._sort_by_date(revenues)
 
     def get_balance_history(self, company_id: str) -> list[Balance]:
         company = self.storage.get(company_id)
@@ -47,9 +39,9 @@ class CompanyService:
         date_metrics = defaultdict(lambda: {'assets': 0.0, 'equity': 0.0})
 
         for metric in company.financial_metrics:
-            if metric.code == 1300:
+            if metric.code == FinancialMetricCode.ASSETS:
                 date_metrics[metric.date]['assets'] += metric.value
-            elif metric.code == 1495:
+            elif metric.code == FinancialMetricCode.EQUITY:
                 date_metrics[metric.date]['equity'] += metric.value
 
         # Create Balance instances only for dates with both assets and equity
@@ -68,4 +60,14 @@ class CompanyService:
         balances.sort(key=lambda b: b.date)
 
         return balances
+
+    def _extract_revenues(self, financial_metrics) -> list[Revenue]:
+        revenues = []
+        for metric in financial_metrics:
+            if metric.code == FinancialMetricCode.REVENUE:
+                revenues.append(Revenue(date=metric.date, value=metric.value))
+        return revenues
+
+    def _sort_by_date(self, items) -> list:
+        return sorted(items, key=lambda item: item.date)
 
