@@ -3,7 +3,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await loadCompanyProfile(companyId);
     await loadRevenueChart(companyId);
+    await loadBalanceWaterfall(companyId);
 });
+
 
 /* ==============================
    COMPANY PROFILE
@@ -103,3 +105,106 @@ async function loadRevenueChart(companyId) {
         console.error(error);
     }
 }
+
+async function loadBalanceWaterfall(companyId) {
+    const select = document.getElementById("balance-date-select");
+    const chartDiv = document.getElementById("balance-waterfall-chart");
+
+    try {
+        const response = await fetch(`/companies/${companyId}/balance`);
+        if (!response.ok) {
+            throw new Error("Failed to load balance data");
+        }
+
+        const balances = await response.json();
+
+        if (!balances.length) {
+            chartDiv.innerHTML = "Немає даних";
+            return;
+        }
+
+        // заповнюємо dropdown
+        select.innerHTML = "";
+        balances.forEach((b, index) => {
+            const option = document.createElement("option");
+            option.value = index;
+            option.textContent = b.date;
+            select.appendChild(option);
+        });
+
+        // обираємо ОСТАННЮ дату
+        select.value = balances.length - 1;
+
+        // будуємо графік
+        renderBalanceWaterfall(balances[select.value]);
+
+        // onchange
+        select.addEventListener("change", () => {
+            renderBalanceWaterfall(balances[select.value]);
+        });
+
+    } catch (error) {
+        chartDiv.innerHTML = `
+            <div class="alert alert-danger text-center">
+                ❌ Помилка завантаження балансу
+            </div>
+        `;
+        console.error(error);
+    }
+}
+
+function renderBalanceWaterfall(balance) {
+    const chartDiv = document.getElementById("balance-waterfall-chart");
+
+    const equity = balance.equity;
+    const liabilities = balance.liabilities;
+    const assets = equity + liabilities; // контрольна сума
+
+    const positiveColor = "#2ecc71";   // зелений
+    const negativeColor = "#e74c3c";   // червоний
+    const assetsColor   = "#3498db";   // синій
+
+    const data = [{
+        type: "waterfall",
+        orientation: "v",
+        x: ["Equity", "Liabilities", "Assets"],
+        measure: ["relative", "relative", "total"],
+        y: [equity, liabilities, assets],
+        text: [equity, liabilities, assets],
+        textposition: "outside",
+
+        increasing: {
+            marker: { color: positiveColor }
+        },
+        decreasing: {
+            marker: { color: negativeColor }
+        },
+        totals: {
+            marker: { color: assetsColor }
+        },
+
+        connector: {
+            line: { width: 2 }
+        }
+    }];
+
+    const layout = {
+        title: `Balance structure (${formatDate(balance.date)})`,
+        yaxis: {
+            title: "Value",
+            zeroline: true,
+            tickformat: ",.0f"
+        },
+        showlegend: false
+    };
+
+    Plotly.newPlot(chartDiv, data, layout, { responsive: true });
+}
+
+
+function formatDate(dateString) {
+    return new Date(dateString).toISOString().split("T")[0];
+}
+
+
+

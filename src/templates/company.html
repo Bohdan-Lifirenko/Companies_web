@@ -32,6 +32,30 @@
     </div>
 </div>
 
+<!-- BALANCE HEADER -->
+<div class="mt-5 mb-3">
+    <h2 class="text-center text-dark">
+        🧮 Баланс компанії (Waterfall)
+    </h2>
+</div>
+
+<!-- BALANCE DATE SELECT -->
+<div class="row mb-3">
+    <div class="col-md-4 mx-auto">
+        <label class="form-label">Дата балансу</label>
+        <select id="balance-date-select" class="form-select">
+            <option>Завантаження...</option>
+        </select>
+    </div>
+</div>
+
+<!-- BALANCE WATERFALL CHART -->
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div id="balance-waterfall-chart" style="height: 450px;"></div>
+    </div>
+</div>
+
 <!-- Передаємо tax_id у JS -->
 <script>
     window.COMPANY_ID = "{{ company_id }}";
@@ -41,6 +65,6 @@
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 
 <!-- Наш JS -->
-<script src="{{ url_for('static', filename='js/company_revenue.js') }}"></script>
+<script src="{{ url_for('static', filename='js/company.js') }}"></script>
 
 {% endblock %}

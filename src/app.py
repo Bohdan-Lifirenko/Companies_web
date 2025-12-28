@@ -146,20 +146,26 @@ if __name__ == '__main__':
     company_storage.add(company_source.get_companies())
 
     company = company_storage.get("00236903")
-    print(company)
+    # print(company)
 
     # Create service
     company_service = CompanyService(company_storage)
     # Getting company profile
     profile = company_service.get_profile("00236903")
-    print(profile)
+    # print(profile)
 
     # Getting revenue
     revenue_history = company_service.get_revenue_history("00236903")
 
-    print("\nRevenue history:")
-    for revenue in revenue_history:
-        print(revenue)
+    # print("\nRevenue history:")
+    # for revenue in revenue_history:
+    #     print(revenue)
+
+    # Getting balance
+    balance = company_service.get_balance_history("00236903")
+    print("\nBalance history:")
+    for balance_item in balance:
+        print(balance_item)
 
     # Start WEB app
     company_controller = CompanyController(company_service)
