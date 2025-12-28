@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Company {{ tax_id }}{% endblock %}
+
+{% block content %}
+
+<!-- COMPANY PROFILE -->
+<div class="card info-card shadow-sm mb-4">
+    <div class="card-body">
+        <h4 class="mb-3">🏢 Профіль компанії</h4>
+
+        <div id="company-profile">
+            <div class="text-muted">Завантаження...</div>
+        </div>
+    </div>
+</div>
+
+<!-- REVENUE HEADER -->
+<div class="mb-4">
+    <h2 class="text-center text-dark">
+        📈 Дохід компанії
+    </h2>
+    <p class="text-center text-muted">
+        ЄДРПОУ: <strong>{{ tax_id }}</strong>
+    </p>
+</div>
+
+<!-- REVENUE CHART -->
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div id="revenue-chart" style="height: 400px;"></div>
+    </div>
+</div>
+
+<!-- Передаємо tax_id у JS -->
+<script>
+    window.COMPANY_ID = "{{ company_id }}";
+</script>
+
+<!-- Plotly -->
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+<!-- Наш JS -->
+<script src="{{ url_for('static', filename='js/company_revenue.js') }}"></script>
+
+{% endblock %}

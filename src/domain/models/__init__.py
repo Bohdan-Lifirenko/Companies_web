@@ -1,6 +1,7 @@
 from .company import Company
-from .financial_metric import FinancialMetric
+from .company import FinancialMetric
 from .revenue import Revenue
 from .balance import Balance
+from .company_profile import CompanyProfile
 
-__all__ = ['Company', 'FinancialMetric', 'Revenue', 'Balance']
+__all__ = ['Company', 'FinancialMetric', 'Revenue', 'Balance', 'CompanyProfile']

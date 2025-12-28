@@ -2,10 +2,15 @@ import os
 import sqlite3
 from pathlib import Path
 import pandas as pd
+from flask import Flask, render_template
 
-from src.domain.source.csv_financial_metric_source import CsvFinancialMetricSource
-from src.domain.storage import SqliteCFinancialMetricStorage
+from src.domain.controler.company_controller import CompanyController
+from src.domain.service import CompanyService
+from src.domain.source.csv_company_source import CSVCompanySource
+from src.domain.storage import CompanyStorageInitializer
+from src.domain.storage.sqllite_company_storage import SqliteCompanyStorage
 
+app = Flask(__name__)
 
 def create_db():
     data_dir = Path(__file__).resolve().parent.parent / "data"
@@ -24,6 +29,7 @@ def create_db():
 
     conn = sqlite3.connect(db_file)
 
+    cursor = conn.cursor()
     # Create companies_description table
     conn.execute("""
     CREATE TABLE IF NOT EXISTS companies_description (
@@ -111,19 +117,57 @@ def get_company_revenue(db_file, tax_id_value, code_value):
     conn.close()
     return df
 
+@app.route('/search/<company_id>')
+def company(company_id):
+
+    return render_template('company.html', company_id=company_id)
+
 if __name__ == '__main__':
-    create_db()
+    # Choose db file location
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    DATA_DIR = BASE_DIR / "data"
+    db_file = DATA_DIR / 'analytics.db'
 
-    data_dir = Path(__file__).resolve().parent.parent / "data"
-    db_file = data_dir / 'analytics.db'
-    revenue_df = get_company_revenue(db_file, '00236903', 2000)
-    print(revenue_df)
+    print(f"Loading data from {DATA_DIR}")
 
-    sql_db = SqliteCFinancialMetricStorage(sqlite3.connect(db_file))
-    revenue_list = sql_db.get_company_revenue_statistic('00236903')
-    print(revenue_list)
+    # Creating db connection
+    db_connection = sqlite3.connect(db_file, check_same_thread=False)
 
-    csvmf = CsvFinancialMetricSource(data_dir / 'fin_values.csv')
-    metrics = csvmf.get_fin_metrics()
-    print(metrics)
+    # Initialize db
+    CompanyStorageInitializer.init(db_connection)
+
+    # Getting data from source
+    firms_path = DATA_DIR / "firms.csv"
+    fin_values_path = DATA_DIR / "fin_values.csv"
+    company_source = CSVCompanySource(firms_path, fin_values_path)
+
+    # Create storage
+    company_storage = SqliteCompanyStorage(db_connection)
+    company_storage.add(company_source.get_companies())
+
+    company = company_storage.get("00236903")
+    print(company)
+
+    # Create service
+    company_service = CompanyService(company_storage)
+    # Getting company profile
+    profile = company_service.get_profile("00236903")
+    print(profile)
+
+    # Getting revenue
+    revenue_history = company_service.get_revenue_history("00236903")
+
+    print("\nRevenue history:")
+    for revenue in revenue_history:
+        print(revenue)
+
+    # Start WEB app
+    company_controller = CompanyController(company_service)
+    app.register_blueprint(company_controller.blueprint())
+
+    app.run(debug=True)
+
+    # Close db connection
+    db_connection.close()
+
 
