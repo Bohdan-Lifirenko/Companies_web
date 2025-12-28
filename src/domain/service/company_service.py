@@ -26,7 +26,8 @@ class CompanyService:
             kved=company.kved,
             opf_code=company.opf_code,
             katottg=company.katottg,
-            region_code=company.region_code
+            region_code=company.region_code,
+            local_code=company.local_code
         )
 
     def get_revenue_history(self, company_id: str) -> list[Revenue]:

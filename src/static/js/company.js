@@ -77,7 +77,7 @@ async function loadCompanyProfile(companyId) {
 
         container.innerHTML = `
             <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <div class="info-label">Назва</div>
                     <div class="fw-semibold">${company.name ?? "-"}</div>
                 </div>
@@ -92,16 +92,24 @@ async function loadCompanyProfile(companyId) {
                     <div>${company.kved ?? "-"}</div>
                 </div>
 
-                <div class="col-md-6">
-                    <div class="info-label">Адреса</div>
-                    <div>${company.address ?? "-"}</div>
+                <div class="col-md-3">
+                    <div class="info-label">Код ОПФ</div>
+                    <div>${company.opf_code ?? "-"}</div>
                 </div>
 
                 <div class="col-md-3">
-                    <div class="info-label">Статус</div>
-                    <span class="badge bg-success">
-                        ${company.status ?? "N/A"}
-                    </span>
+                    <div class="info-label">Код регіону</div>
+                    <div>${company.region_code ?? "-"}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="info-label">КАТОТТГ</div>
+                    <div>${company.katottg ?? "-"}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="info-label">Код населеного пункту</div>
+                    <div>${company.local_code ?? "-"}</div>
                 </div>
             </div>
         `;

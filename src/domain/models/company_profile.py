@@ -8,3 +8,4 @@ class CompanyProfile:
     opf_code: str    # ОПФ
     katottg: str     # КАТОТТГ
     region_code: str # Код регіону
+    local_code: str  # Код населеного пункту
