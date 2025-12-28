@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Пошук інформації про компанію{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card info-card shadow-sm mb-4">
+            <div class="card-body text-center">
+                <h2 class="mb-4">🔍 Пошук компанії</h2>
+                <form action="/search" method="POST" class="mb-3">
+                    <div class="mb-3">
+                        <label for="company_id" class="form-label">Введіть ЄДРПОУ компанії</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-lg" id="company_id" name="company_id"
+                                   placeholder="Наприклад: 00236903" required pattern="[0-9]+"
+                                   title="Будь ласка, введіть лише цифри">
+                            <button class="btn btn-primary" type="submit">Пошук</button>
+                        </div>
+                        <div class="form-text text-start">Введіть 8-значний код ЄДРПОУ для пошуку інформації про компанію</div>
+                    </div>
+                </form>
+
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card info-card shadow-sm">
+            <div class="card-body">
+                <h4 class="mb-3">📊 Останні пошуки</h4>
+                <div class="list-group">
+                    <a href="/search/00236903" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">ЄДРПОУ: 00236903</h5>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

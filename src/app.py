@@ -1,8 +1,7 @@
 import os
-import sqlite3
 from pathlib import Path
 import pandas as pd
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint
 
 from src.domain.controler.company_controller import CompanyController
 from src.domain.service import CompanyService
@@ -11,122 +10,65 @@ from src.domain.storage import CompanyStorageInitializer, SQLiteConnectionManage
 from src.domain.storage.sqllite_company_storage import SqliteCompanyStorage
 
 app = Flask(__name__)
+app.secret_key = 'your-secret-key'  # Додаємо секретний ключ для роботи flash повідомлень
 
-def create_db():
-    data_dir = Path(__file__).resolve().parent.parent / "data"
-    print(f"Loading data from {data_dir}")
-    firms_path = data_dir / "firms.csv"
-    fin_values_path = data_dir / "fin_values.csv"
 
-    # Крок 2: Читання .csv у DataFrame
-    companies_description_df = pd.read_csv(firms_path, dtype=str)  # Всі колонки як рядки, щоб зберегти провідні нулі (наприклад, '00236903')
-    financial_metrics_df = pd.read_csv(fin_values_path, dtype=str)
+@app.route('/')
+def index():
+    # Головна сторінка з формою пошуку
+    return render_template('index.html')
 
-    # Крок 3: Створення бази даних (якщо не існує) і таблиці 'companies_discription'
-    db_file = data_dir / 'analytics.db'
-    if not os.path.exists(db_file):
-        print(f"Створюємо нову базу даних: {db_file}")
 
-    conn = sqlite3.connect(db_file)
+@app.route('/search', methods=['POST'])
+def search():
+    # Обробка форми пошуку
+    company_id = request.form.get('company_id', '')
 
-    cursor = conn.cursor()
-    # Create companies_description table
-    conn.execute("""
-    CREATE TABLE IF NOT EXISTS companies_description (
-        tax_id VARCHAR(8) PRIMARY KEY,
-        name TEXT,
-        kved VARCHAR(10),
-        opf_code VARCHAR(10),
-        katottg VARCHAR(20),
-        region_code VARCHAR(10),
-        local_code VARCHAR(10),
-        num_workers INTEGER
-    )
-    """)
+    if not company_id:
+        flash('Будь ласка, введіть ЄДРПОУ компанії', 'danger')
+        return redirect(url_for('index'))
 
-    # create financial_metrics table
-    conn.execute("""
-    CREATE TABLE IF NOT EXISTS financial_metrics (
-        tax_id VARCHAR(8),
-        my_date DATE,
-        code INTEGER,
-        value REAL,
-        c_doc_sub VARCHAR(10),
-        FOREIGN KEY (tax_id) REFERENCES companies_description(tax_id)
-    )
-    """)
+    # Перевірка, чи існує компанія в базі даних
+    try:
+        company = company_storage.get(company_id)
+        if not company:
+            flash(f'Компанію з ЄДРПОУ {company_id} не знайдено', 'warning')
+            return redirect(url_for('index'))
+    except Exception as e:
+        flash(f'Помилка при пошуку: {str(e)}', 'danger')
+        return redirect(url_for('index'))
 
-    cursor = conn.cursor()
+    # Перенаправлення на сторінку компанії
+    return redirect(url_for('company', company_id=company_id))
 
-    # Fill tables with data from .csv files  # 'replace' — для оновлення, якщо таблиця існує
-    table_name = 'companies_description'
-    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-    row_count = cursor.fetchone()[0]
-
-    if not row_count > 0:
-        companies_description_df.to_sql('companies_description', conn, if_exists='append', index=False)
-
-    table_name = 'financial_metrics'
-    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-    row_count = cursor.fetchone()[0]
-
-    if not row_count > 0:
-        financial_metrics_df.to_sql('financial_metrics', conn, if_exists='append', index=False)
-
-    # Крок 4: Перевірка даних (опціонально)
-    cursor.execute("PRAGMA table_info(companies_description);")
-    columns = cursor.fetchall()
-
-    print("Columns in companies_description table:")
-    for col in columns:
-        print(col)
-
-    cursor.execute("PRAGMA table_info(financial_metrics);")
-    columns = cursor.fetchall()
-
-    print("\nColumns in financial_metrics table:")
-    for col in columns:
-        print(col)
-
-    cursor.execute("SELECT * FROM companies_description LIMIT 10")
-    print("Data from companies_description table:")
-    print(cursor.fetchall())
-
-    cursor.execute("SELECT * FROM financial_metrics LIMIT 10")
-    print("\nData from financial_metrics table:")
-    print(cursor.fetchall())
-
-    conn.close()
-
-def get_company_revenue(db_file, tax_id_value, code_value):
-    """
-    Повертає стовпці my_date і value з таблиці financial_metrics
-    для заданого tax_id і code.
-    """
-    conn = sqlite3.connect(db_file)
-
-    query = """
-    SELECT my_date, value
-    FROM financial_metrics
-    WHERE tax_id = ? AND code = ?
-    """
-
-    # Використовуємо pandas для зручності
-    df = pd.read_sql_query(query, conn, params=(tax_id_value, code_value))
-
-    conn.close()
-    return df
 
 @app.route('/search/<company_id>')
 def company(company_id):
+    # Перевірка, чи існує компанія
+    try:
+        company = company_storage.get(company_id)
+        if not company:
+            flash(f'Компанію з ЄДРПОУ {company_id} не знайдено', 'warning')
+            return redirect(url_for('index'))
+    except Exception as e:
+        flash(f'Помилка при пошуку: {str(e)}', 'danger')
+        return redirect(url_for('index'))
 
     return render_template('company.html', company_id=company_id)
 
-if __name__ == '__main__':
-    # Choose db file location
+
+# Глобальні змінні для доступу в маршрутах
+company_storage = None
+company_service = None
+storage_connection_manager = None
+
+
+def init_app():
+    global company_storage, company_service, storage_connection_manager
+
+    # Визначення шляхів
     BASE_DIR = Path(__file__).resolve().parent.parent
     DATA_DIR = BASE_DIR / "data"
-    db_file = DATA_DIR / 'analytics.db'
 
     print(f"Loading data from {DATA_DIR}")
 
@@ -134,56 +76,42 @@ if __name__ == '__main__':
     db_path = DATA_DIR / "company.db"
     storage_connection_manager = SQLiteConnectionManager(db_path)
 
-    # Initialize db
+    # Ініціалізація БД
     CompanyStorageInitializer.init(storage_connection_manager)
 
-    # Getting data from source
+    # Отримання даних з джерела
     firms_path = DATA_DIR / "firms.csv"
     fin_values_path = DATA_DIR / "fin_values.csv"
     company_source = CSVCompanySource(firms_path, fin_values_path)
 
-    # Create storage
+    # Створення сховища
     company_storage = SqliteCompanyStorage(storage_connection_manager)
     company_storage.add(company_source.get_companies())
 
-    company = company_storage.get("00236903")
-    # print(company)
-
-    # Create service
+    # Створення сервісу
     company_service = CompanyService(company_storage)
-    # Getting company profile
-    profile = company_service.get_profile("00236903")
-    # print(profile)
 
-    # Getting revenue
-    revenue_history = company_service.get_revenue_history("00236903")
-
-    # print("\nRevenue history:")
-    # for revenue in revenue_history:
-    #     print(revenue)
-
-    # Getting balance
-    balance = company_service.get_balance_history("00236903")
-    print("\nBalance history:")
-    for balance_item in balance:
-        print(balance_item)
-
-    # Start WEB app
+    # Реєстрація контролера
     company_controller = CompanyController(company_service)
     app.register_blueprint(company_controller.blueprint())
 
+
+if __name__ == '__main__':
+    # Ініціалізація додатку
+    init_app()
+
+    # Запуск веб-додатку
     app.run(debug=True)
 
 
 # При завершенні роботи програми
-# Наприклад, у функції, яка викликається при закритті додатку
 def cleanup():
-    storage_connection_manager.close_connection()
+    if storage_connection_manager:
+        storage_connection_manager.close_connection()
 
 
-# Зареєструвати цю функцію для виклику при завершенні роботи Flask
+# Реєстрація функції для виклику при завершенні роботи Flask
 @app.teardown_appcontext
 def teardown_db(exception):
-    storage_connection_manager.close_connection()
-
-
+    if storage_connection_manager:
+        storage_connection_manager.close_connection()
