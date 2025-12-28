@@ -8,6 +8,60 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 /* ==============================
+   CHART CONFIGURATION
+============================== */
+const CHART_COLORS = {
+    primary: "#3498db",
+    positive: "#2ecc71",
+    negative: "#e74c3c",
+    gradient: {
+        start: "rgba(52, 152, 219, 0.4)",
+        end: "rgba(52, 152, 219, 0.05)"
+    }
+};
+
+const CHART_DEFAULTS = {
+    font: { family: "Inter, system-ui, sans-serif", size: 12 },
+    paper_bgcolor: "transparent",
+    plot_bgcolor: "transparent",
+    margin: { t: 50, r: 30, b: 50, l: 70 },
+    hovermode: "x unified"
+};
+
+function formatNumber(value) {
+    return new Intl.NumberFormat("uk-UA", {
+        maximumFractionDigits: 0
+    }).format(value);
+}
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString("uk-UA", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    });
+}
+
+function showChartError(container, message = "Помилка завантаження даних") {
+    container.innerHTML = `
+        <div class="alert alert-danger text-center">
+             ${message}
+        </div>
+    `;
+}
+
+function showChartLoading(container) {
+    container.innerHTML = `
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Завантаження...</span>
+            </div>
+        </div>
+    `;
+}
+
+
+/* ==============================
    COMPANY PROFILE
 ============================== */
 async function loadCompanyProfile(companyId) {
@@ -55,7 +109,7 @@ async function loadCompanyProfile(companyId) {
     } catch (error) {
         container.innerHTML = `
             <div class="alert alert-danger">
-                ❌ Не вдалося завантажити профіль компанії
+                Не вдалося завантажити профіль компанії
             </div>
         `;
         console.error(error);
@@ -70,11 +124,13 @@ async function loadRevenueChart(companyId) {
 
     try {
         const response = await fetch(`/companies/${companyId}/revenue`);
-        if (!response.ok) {
-            throw new Error("Failed to load revenue data");
-        }
-
         const data = await response.json();
+
+        // Обробка помилки від API або порожніх даних
+        if (!response.ok || data.error || !Array.isArray(data) || !data.length) {
+            chartDiv.innerHTML = `<div class="text-muted text-center py-4">Немає даних про дохід</div>`;
+            return;
+        }
 
         const dates = data.map(item => new Date(item.date));
         const values = data.map(item => item.value);
@@ -85,23 +141,54 @@ async function loadRevenueChart(companyId) {
             type: "scatter",
             mode: "lines+markers",
             name: "Дохід",
-            line: { width: 3 }
+            line: {
+                width: 3,
+                color: CHART_COLORS.primary,
+                shape: "spline"
+            },
+            marker: {
+                size: 8,
+                color: CHART_COLORS.primary,
+                line: { width: 2, color: "#fff" }
+            },
+            fill: "tozeroy",
+            fillcolor: CHART_COLORS.gradient.start,
+            hovertemplate: "<b>%{x|%d.%m.%Y}</b><br>Дохід: %{y:,.0f} грн<extra></extra>"
         };
 
         const layout = {
-            title: "Динаміка доходу",
-            xaxis: { title: "Дата" },
-            yaxis: { title: "Значення", tickformat: ",.0f" }
+            ...CHART_DEFAULTS,
+            title: {
+                text: "Динаміка доходу",
+                font: { size: 16, color: "#333" }
+            },
+            xaxis: {
+                title: "Дата",
+                showgrid: true,
+                gridcolor: "rgba(0,0,0,0.05)",
+                tickformat: "%b %Y"
+            },
+            yaxis: {
+                title: "Значення (грн)",
+                tickformat: ",.0f",
+                showgrid: true,
+                gridcolor: "rgba(0,0,0,0.08)",
+                zeroline: true,
+                zerolinecolor: "rgba(0,0,0,0.1)"
+            }
         };
 
-        Plotly.newPlot(chartDiv, [trace], layout, { responsive: true });
+        const config = {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ["lasso2d", "select2d"],
+            displaylogo: false
+        };
+
+        Plotly.newPlot(chartDiv, [trace], layout, config);
 
     } catch (error) {
-        chartDiv.innerHTML = `
-            <div class="alert alert-danger text-center">
-                ❌ Помилка завантаження даних
-            </div>
-        `;
+        chartDiv.innerHTML = `<div class="text-muted text-center py-4">Немає даних про дохід</div>`;
         console.error(error);
     }
 }
@@ -112,14 +199,12 @@ async function loadBalanceWaterfall(companyId) {
 
     try {
         const response = await fetch(`/companies/${companyId}/balance`);
-        if (!response.ok) {
-            throw new Error("Failed to load balance data");
-        }
-
         const balances = await response.json();
 
-        if (!balances.length) {
-            chartDiv.innerHTML = "Немає даних";
+        // Обробка помилки від API або порожніх даних
+        if (!response.ok || balances.error || !Array.isArray(balances) || !balances.length) {
+            chartDiv.innerHTML = `<div class="text-muted text-center py-4">Немає даних про баланс</div>`;
+            select.innerHTML = `<option>Немає даних</option>`;
             return;
         }
 
@@ -128,7 +213,7 @@ async function loadBalanceWaterfall(companyId) {
         balances.forEach((b, index) => {
             const option = document.createElement("option");
             option.value = index;
-            option.textContent = b.date;
+            option.textContent = formatDate(b.date);
             select.appendChild(option);
         });
 
@@ -144,11 +229,7 @@ async function loadBalanceWaterfall(companyId) {
         });
 
     } catch (error) {
-        chartDiv.innerHTML = `
-            <div class="alert alert-danger text-center">
-                ❌ Помилка завантаження балансу
-            </div>
-        `;
+        showChartError(chartDiv, "Не вдалося завантажити дані балансу");
         console.error(error);
     }
 }
@@ -156,54 +237,72 @@ async function loadBalanceWaterfall(companyId) {
 function renderBalanceWaterfall(balance) {
     const chartDiv = document.getElementById("balance-waterfall-chart");
 
-    const equity = balance.equity;
-    const liabilities = balance.liabilities;
-    const assets = equity + liabilities; // контрольна сума
-
-    const positiveColor = "#2ecc71";   // зелений
-    const negativeColor = "#e74c3c";   // червоний
-    const assetsColor   = "#3498db";   // синій
+    const equity = balance.equity ?? 0;
+    const liabilities = balance.liabilities ?? 0;
+    const assets = equity + liabilities;
 
     const data = [{
         type: "waterfall",
         orientation: "v",
-        x: ["Equity", "Liabilities", "Assets"],
+        x: ["Власний капітал", "Зобов'язання", "Активи"],
         measure: ["relative", "relative", "total"],
         y: [equity, liabilities, assets],
-        text: [equity, liabilities, assets],
+        text: [formatNumber(equity), formatNumber(liabilities), formatNumber(assets)],
         textposition: "outside",
+        textfont: { size: 13, color: "#333" },
 
         increasing: {
-            marker: { color: positiveColor }
+            marker: {
+                color: CHART_COLORS.positive,
+                line: { color: CHART_COLORS.positive, width: 1 }
+            }
         },
         decreasing: {
-            marker: { color: negativeColor }
+            marker: {
+                color: CHART_COLORS.negative,
+                line: { color: CHART_COLORS.negative, width: 1 }
+            }
         },
         totals: {
-            marker: { color: assetsColor }
+            marker: {
+                color: CHART_COLORS.primary,
+                line: { color: CHART_COLORS.primary, width: 1 }
+            }
         },
 
         connector: {
-            line: { width: 2 }
-        }
+            line: { width: 2, color: "rgba(0,0,0,0.2)", dash: "dot" }
+        },
+
+        hovertemplate: "<b>%{x}</b><br>Сума: %{y:,.0f} грн<extra></extra>"
     }];
 
     const layout = {
-        title: `Balance structure (${formatDate(balance.date)})`,
-        yaxis: {
-            title: "Value",
-            zeroline: true,
-            tickformat: ",.0f"
+        ...CHART_DEFAULTS,
+        title: {
+            text: `Структура балансу (${formatDate(balance.date)})`,
+            font: { size: 16, color: "#333" }
         },
-        showlegend: false
+        yaxis: {
+            title: "Сума (грн)",
+            zeroline: true,
+            zerolinecolor: "rgba(0,0,0,0.2)",
+            tickformat: ",.0f",
+            showgrid: true,
+            gridcolor: "rgba(0,0,0,0.08)"
+        },
+        showlegend: false,
+        bargap: 0.3
     };
 
-    Plotly.newPlot(chartDiv, data, layout, { responsive: true });
-}
+    const config = {
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ["lasso2d", "select2d"],
+        displaylogo: false
+    };
 
-
-function formatDate(dateString) {
-    return new Date(dateString).toISOString().split("T")[0];
+    Plotly.newPlot(chartDiv, data, layout, config);
 }
 
 
