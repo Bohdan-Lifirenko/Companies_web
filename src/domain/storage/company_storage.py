@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 from typing import Optional
 
-from src.domain.models import Company, Revenue
+from src.domain.models import Company
 
 
 class CompanyStorage(ABC):
@@ -15,5 +15,4 @@ class CompanyStorage(ABC):
 
     @abstractmethod
     def exists(self, company_id: str) -> bool:
-        """Перевіряє, чи існує компанія з вказаним ID в базі даних."""
         pass

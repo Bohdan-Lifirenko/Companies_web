@@ -1,6 +1,3 @@
-import sqlite3
-from pathlib import Path
-
 from src.domain.storage import SQLiteConnectionManager
 
 

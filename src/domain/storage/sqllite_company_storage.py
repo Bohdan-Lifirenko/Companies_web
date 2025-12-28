@@ -62,7 +62,7 @@ class SqliteCompanyStorage(CompanyStorage):
             )
 
     def add(self, companies: list[Company]) -> None:
-        # Використовуємо транзакцію для атомарного додавання всіх компаній
+        # use a transaction to atomically add all companies
         with self.db_manager.transaction_context() as connection:
             cursor = connection.cursor()
 
@@ -100,7 +100,6 @@ class SqliteCompanyStorage(CompanyStorage):
                     ))
 
     def exists(self, company_id: str) -> bool:
-        """Перевіряє наявність компанії в базі даних по company_id."""
         with self.db_manager.cursor_context() as cursor:
             cursor.execute("""
                 SELECT 1 FROM companies_description WHERE tax_id = ? LIMIT 1

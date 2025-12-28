@@ -1,7 +1,5 @@
-import os
 from pathlib import Path
-import pandas as pd
-from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint
+from flask import Flask, render_template, request, redirect, url_for, flash
 
 from src.domain.controler.company_controller import CompanyController
 from src.domain.service import CompanyService
@@ -10,25 +8,22 @@ from src.domain.storage import CompanyStorageInitializer, SQLiteConnectionManage
 from src.domain.storage.sqllite_company_storage import SqliteCompanyStorage
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key'  # Додаємо секретний ключ для роботи flash повідомлень
+app.secret_key = 'your-secret-key'
 
 
 @app.route('/')
 def index():
-    # Головна сторінка з формою пошуку
     return render_template('index.html')
 
 
 @app.route('/search', methods=['POST'])
 def search():
-    # Обробка форми пошуку
     company_id = request.form.get('company_id', '')
 
     if not company_id:
         flash('Будь ласка, введіть ЄДРПОУ компанії', 'danger')
         return redirect(url_for('index'))
 
-    # Перевірка, чи існує компанія в базі даних
     try:
         if not company_service.company_exists(company_id):
             flash(f'Компанію з ЄДРПОУ {company_id} не знайдено', 'warning')
@@ -37,13 +32,11 @@ def search():
         flash(f'Помилка при пошуку: {str(e)}', 'danger')
         return redirect(url_for('index'))
 
-    # Перенаправлення на сторінку компанії
     return redirect(url_for('company', company_id=company_id))
 
 
 @app.route('/search/<company_id>')
 def company(company_id):
-    # Перевірка, чи існує компанія
     try:
         if not company_service.company_exists(company_id):
             flash(f'Компанію з ЄДРПОУ {company_id} не знайдено', 'warning')
@@ -54,8 +47,6 @@ def company(company_id):
 
     return render_template('company.html', company_id=company_id)
 
-
-# Глобальні змінні для доступу в маршрутах
 company_storage = None
 company_service = None
 storage_connection_manager = None
@@ -64,51 +55,51 @@ storage_connection_manager = None
 def init_app():
     global company_storage, company_service, storage_connection_manager
 
-    # Визначення шляхів
+    # Identifying paths
     BASE_DIR = Path(__file__).resolve().parent.parent
     DATA_DIR = BASE_DIR / "data"
 
     print(f"Loading data from {DATA_DIR}")
 
-    # Ініціалізація менеджера бази даних
+    # Initializing the database manager
     db_path = DATA_DIR / "company.db"
     storage_connection_manager = SQLiteConnectionManager(db_path)
 
-    # Ініціалізація БД
+    # Database initialization
     CompanyStorageInitializer.init(storage_connection_manager)
 
-    # Отримання даних з джерела
+    # Obtaining data from the source
     firms_path = DATA_DIR / "firms.csv"
     fin_values_path = DATA_DIR / "fin_values.csv"
     company_source = CSVCompanySource(firms_path, fin_values_path)
 
-    # Створення сховища
+    # Creating a repository
     company_storage = SqliteCompanyStorage(storage_connection_manager)
     company_storage.add(company_source.get_companies())
 
-    # Створення сервісу
+    # Creation of the service
     company_service = CompanyService(company_storage)
 
-    # Реєстрація контролера
+    # Controller registration
     company_controller = CompanyController(company_service)
     app.register_blueprint(company_controller.blueprint())
 
 
 if __name__ == '__main__':
-    # Ініціалізація додатку
+    # Application initialization
     init_app()
 
-    # Запуск веб-додатку
+    # Launching a web application
     app.run(debug=True)
 
 
-# При завершенні роботи програми
+# When the program finishes running
 def cleanup():
     if storage_connection_manager:
         storage_connection_manager.close_connection()
 
 
-# Реєстрація функції для виклику при завершенні роботи Flask
+# Registering a function to call when Flask finishes running
 @app.teardown_appcontext
 def teardown_db(exception):
     if storage_connection_manager:

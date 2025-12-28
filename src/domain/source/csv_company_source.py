@@ -13,7 +13,7 @@ class CSVCompanySource(CompanySource):
         self.fin_metrics_file_path = fin_metrics_file_path
 
     def get_companies(self) -> List[Company]:
-        # Зчитуємо фінансові метрики та групуємо їх по tax_id
+        # Read financial metrics and group them by tax_id
         metrics_by_tax_id: Dict[str, List[FinancialMetric]] = {}
 
         with open(self.fin_metrics_file_path, newline="", encoding="utf-8") as f:
@@ -29,7 +29,7 @@ class CSVCompanySource(CompanySource):
 
                 metrics_by_tax_id.setdefault(metric.tax_id, []).append(metric)
 
-        # 2. Зчитуємо компанії та під'єднуємо до них фінансові метрики
+        # 2. Read companies and connect financial metrics to them
         companies: List[Company] = []
 
         with open(self.company_description_file_path, newline="", encoding="utf-8") as f:
