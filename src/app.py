@@ -7,7 +7,7 @@ from flask import Flask, render_template
 from src.domain.controler.company_controller import CompanyController
 from src.domain.service import CompanyService
 from src.domain.source.csv_company_source import CSVCompanySource
-from src.domain.storage import CompanyStorageInitializer
+from src.domain.storage import CompanyStorageInitializer, SQLiteConnectionManager
 from src.domain.storage.sqllite_company_storage import SqliteCompanyStorage
 
 app = Flask(__name__)
@@ -130,11 +130,12 @@ if __name__ == '__main__':
 
     print(f"Loading data from {DATA_DIR}")
 
-    # Creating db connection
-    db_connection = sqlite3.connect(db_file, check_same_thread=False)
+    # Ініціалізація менеджера бази даних
+    db_path = DATA_DIR / "company.db"
+    storage_connection_manager = SQLiteConnectionManager(db_path)
 
     # Initialize db
-    CompanyStorageInitializer.init(db_connection)
+    CompanyStorageInitializer.init(storage_connection_manager)
 
     # Getting data from source
     firms_path = DATA_DIR / "firms.csv"
@@ -142,7 +143,7 @@ if __name__ == '__main__':
     company_source = CSVCompanySource(firms_path, fin_values_path)
 
     # Create storage
-    company_storage = SqliteCompanyStorage(db_connection)
+    company_storage = SqliteCompanyStorage(storage_connection_manager)
     company_storage.add(company_source.get_companies())
 
     company = company_storage.get("00236903")
@@ -173,7 +174,16 @@ if __name__ == '__main__':
 
     app.run(debug=True)
 
-    # Close db connection
-    db_connection.close()
+
+# При завершенні роботи програми
+# Наприклад, у функції, яка викликається при закритті додатку
+def cleanup():
+    storage_connection_manager.close_connection()
+
+
+# Зареєструвати цю функцію для виклику при завершенні роботи Flask
+@app.teardown_appcontext
+def teardown_db(exception):
+    storage_connection_manager.close_connection()
 
 
