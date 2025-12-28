@@ -98,3 +98,11 @@ class SqliteCompanyStorage(CompanyStorage):
                         metric.value,
                         metric.c_doc_sub
                     ))
+
+    def exists(self, company_id: str) -> bool:
+        """Перевіряє наявність компанії в базі даних по company_id."""
+        with self.db_manager.cursor_context() as cursor:
+            cursor.execute("""
+                SELECT 1 FROM companies_description WHERE tax_id = ? LIMIT 1
+            """, (company_id,))
+            return cursor.fetchone() is not None

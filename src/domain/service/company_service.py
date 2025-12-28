@@ -14,6 +14,9 @@ class CompanyService:
     def __init__(self, company_storage: CompanyStorage):
         self.storage: CompanyStorage = company_storage
 
+    def company_exists(self, company_id: str) -> bool:
+        return self.storage.exists(company_id)
+
     def get_profile(self, company_id: str) -> CompanyProfile:
         company = self.storage.get(company_id)
 

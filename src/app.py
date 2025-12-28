@@ -30,8 +30,7 @@ def search():
 
     # Перевірка, чи існує компанія в базі даних
     try:
-        company = company_storage.get(company_id)
-        if not company:
+        if not company_service.company_exists(company_id):
             flash(f'Компанію з ЄДРПОУ {company_id} не знайдено', 'warning')
             return redirect(url_for('index'))
     except Exception as e:
@@ -46,8 +45,7 @@ def search():
 def company(company_id):
     # Перевірка, чи існує компанія
     try:
-        company = company_storage.get(company_id)
-        if not company:
+        if not company_service.company_exists(company_id):
             flash(f'Компанію з ЄДРПОУ {company_id} не знайдено', 'warning')
             return redirect(url_for('index'))
     except Exception as e:

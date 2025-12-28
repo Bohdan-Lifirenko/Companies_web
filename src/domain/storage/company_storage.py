@@ -12,3 +12,8 @@ class CompanyStorage(ABC):
     @abstractmethod
     def add(self, companies: list[Company]):
         pass
+
+    @abstractmethod
+    def exists(self, company_id: str) -> bool:
+        """Перевіряє, чи існує компанія з вказаним ID в базі даних."""
+        pass
