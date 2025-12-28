@@ -67,9 +67,9 @@ class SqliteCompanyStorage(CompanyStorage):
             cursor = connection.cursor()
 
             for company in companies:
-                # Insert company description, ignore if tax_id already exists
+                # Insert company description, replace if tax_id already exists REPLACE
                 cursor.execute("""
-                    INSERT OR IGNORE INTO companies_description
+                    INSERT OR REPLACE INTO companies_description
                     (tax_id, name, kved, opf_code, katottg, region_code, local_code, num_workers)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
@@ -88,7 +88,7 @@ class SqliteCompanyStorage(CompanyStorage):
                     # Format datetime to 'YYYY-MM-DD' for SQLite DATE
                     date_str = metric.date.strftime('%Y-%m-%d')
                     cursor.execute("""
-                        INSERT INTO financial_metrics
+                        INSERT OR REPLACE INTO financial_metrics
                         (tax_id, my_date, code, value, c_doc_sub)
                         VALUES (?, ?, ?, ?, ?)
                     """, (

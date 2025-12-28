@@ -30,11 +30,11 @@ class CompanyStorageInitializer:
                     code INTEGER,
                     value REAL,
                     c_doc_sub VARCHAR(10),
+                    PRIMARY KEY (tax_id, my_date, code, c_doc_sub),
                     FOREIGN KEY (tax_id) REFERENCES companies_description(tax_id)
                 )
                 """)
 
-            # Додаємо індекси для покращення продуктивності
             connection.execute("""
                 CREATE INDEX IF NOT EXISTS idx_financial_metrics_tax_id
                 ON financial_metrics(tax_id)
