@@ -1,4 +1,4 @@
-from .financial_metric_source import FinancialMetricSource
-from .csv_financial_metric_source import CsvFinancialMetricSource
+from .company_source import CompanySource
+from .csv_company_source import CSVCompanySource
 
-__all__ = ['FinancialMetricSource', 'CsvFinancialMetricSource']
+__all__ = ['CompanySource', 'CSVCompanySource']
