@@ -26,7 +26,6 @@ class SqliteCompanyStorage(CompanyStorage):
 
         company_row = cur.fetchone()
         if not company_row:
-            conn.close()
             return None
 
         # Unpack company details
