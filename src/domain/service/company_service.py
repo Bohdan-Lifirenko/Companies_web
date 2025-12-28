@@ -35,19 +35,18 @@ class CompanyService:
 
     def get_balance_history(self, company_id: str) -> list[Balance]:
         company = self.storage.get(company_id)
-        # Group metrics by date
-        date_metrics = defaultdict(lambda: {'assets': 0.0, 'equity': 0.0})
+        date_metrics = defaultdict(lambda: {'assets': None, 'equity': None})
 
         for metric in company.financial_metrics:
             if metric.code == FinancialMetricCode.ASSETS:
-                date_metrics[metric.date]['assets'] += metric.value
+                date_metrics[metric.date]['assets'] = metric.value
             elif metric.code == FinancialMetricCode.EQUITY:
-                date_metrics[metric.date]['equity'] += metric.value
+                date_metrics[metric.date]['equity'] = metric.value
 
-        # Create Balance instances only for dates with both assets and equity
+        # Create a balance only if both values are present
         balances = []
         for date, values in date_metrics.items():
-            if values['assets'] != 0.0 and values['equity'] != 0.0:  # Skip if missing one
+            if values['assets'] is not None and values['equity'] is not None:
                 liabilities = values['assets'] - values['equity']
                 balances.append(Balance(
                     date=date,
@@ -56,10 +55,7 @@ class CompanyService:
                     liabilities=liabilities
                 ))
 
-        # Sort by date ascending
-        balances.sort(key=lambda b: b.date)
-
-        return balances
+        return self._sort_by_date(balances)
 
     def _extract_revenues(self, financial_metrics) -> list[Revenue]:
         revenues = []
