@@ -167,7 +167,7 @@ async function loadRevenueChart(companyId) {
         const layout = {
             ...CHART_DEFAULTS,
             title: {
-                text: "Динаміка доходу",
+                text: "Графік динаміки виручки за всі доступні дати",
                 font: { size: 16, color: "#333" }
             },
             xaxis: {
@@ -288,7 +288,7 @@ function renderBalanceWaterfall(balance) {
     const layout = {
         ...CHART_DEFAULTS,
         title: {
-            text: `Структура балансу (${formatDate(balance.date)})`,
+            text: `Графік балансу (Assets = Liabilities + Equity)`,
             font: { size: 16, color: "#333" }
         },
         yaxis: {
