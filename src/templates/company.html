@@ -1,13 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Company {{ tax_id }}{% endblock %}
+{% block title %}Компанія {{ company_id }}{% endblock %}
 
 {% block content %}
 
 <!-- COMPANY PROFILE -->
 <div class="card info-card shadow-sm mb-4">
     <div class="card-body">
-        <h4 class="mb-3">🏢 Профіль компанії</h4>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>🏢 Профіль компанії</h4>
+            <a href="/" class="btn btn-sm btn-outline-primary">← На головну</a>
+        </div>
 
         <div id="company-profile">
             <div class="text-muted">Завантаження...</div>
@@ -21,7 +24,7 @@
         📈 Дохід компанії
     </h2>
     <p class="text-center text-muted">
-        ЄДРПОУ: <strong>{{ tax_id }}</strong>
+        ЄДРПОУ: <strong>{{ company_id }}</strong>
     </p>
 </div>
 
@@ -56,7 +59,7 @@
     </div>
 </div>
 
-<!-- Передаємо tax_id у JS -->
+<!-- Передаємо company_id у JS -->
 <script>
     window.COMPANY_ID = "{{ company_id }}";
 </script>
