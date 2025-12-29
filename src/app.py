@@ -1,3 +1,4 @@
+import sqlite3
 from pathlib import Path
 from flask import Flask, render_template, request, redirect, url_for, flash
 
@@ -63,6 +64,8 @@ def init_app():
 
     # Initializing the database manager
     db_path = DATA_DIR / "company.db"
+
+    print(f"Database path: {db_path}")
     storage_connection_manager = SQLiteConnectionManager(db_path)
 
     # Database initialization
@@ -85,9 +88,10 @@ def init_app():
     app.register_blueprint(company_controller.blueprint())
 
 
+# Application initialization
+init_app()
+
 if __name__ == '__main__':
-    # Application initialization
-    init_app()
 
     # Launching a web application
     app.run(debug=True)
